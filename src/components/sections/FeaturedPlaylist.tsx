@@ -9,9 +9,9 @@ import { YouTubePlaylistPlayer } from "@/components/ui/YouTubePlaylistPlayer";
 type Track = { id: number; title: string; duration: string; src: string };
 
 const tracks: Track[] = [
-  { id: 1, title: "Aurora Pulse", duration: "3:42", src: "/audio/sample1.mp3" },
-  { id: 2, title: "Neon Drift", duration: "4:05", src: "/audio/sample2.mp3" },
-  { id: 3, title: "Cyan Skyline", duration: "2:58", src: "/audio/sample3.mp3" },
+  { id: 1, title: "Test 1", duration: "3:42", src: "/audio/sample1.mp3" },
+  { id: 2, title: "Test 2", duration: "4:05", src: "/audio/sample2.mp3" },
+  { id: 3, title: "Test 3", duration: "2:58", src: "/audio/sample3.mp3" },
 ];
 
 export function FeaturedPlaylist() {
