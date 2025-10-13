@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Orbitron, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -187,6 +188,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${inter.variable} antialiased`}
       >
         {children}
+        {/* jQuery for typewriter animation in Hero (loaded after interactive) */}
+        <Script src="https://code.jquery.com/jquery-3.7.1.min.js" strategy="afterInteractive" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJson) }}

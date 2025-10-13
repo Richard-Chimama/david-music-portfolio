@@ -1,8 +1,33 @@
+"use client";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading, Body } from "@/components/ui/Typography";
+import { Button } from "@/components/ui/Button";
+import { useEffect, useRef, useState } from "react";
 
 export function About() {
+  const [expanded, setExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    let ro: ResizeObserver | null = null;
+    const measure = () => setContentHeight(el.scrollHeight);
+
+    if (expanded) {
+      measure();
+      ro = new ResizeObserver(measure);
+      ro.observe(el);
+    }
+
+    return () => {
+      if (ro) ro.disconnect();
+    };
+  }, [expanded]);
+
   return (
     <Section id="about">
       <Container className="grid md:grid-cols-2 gap-10">
@@ -19,6 +44,24 @@ export function About() {
             Swiden embodies a rare fusion of cultural richness and sonic
             innovation.
           </Body>
+          {!expanded && (
+            <div className="mt-4">
+              <Button
+                variant="secondary"
+                aria-label="Read more about the artist"
+                onClick={() => setExpanded(true)}
+                className="shadow-glow"
+              >
+                Read More
+              </Button>
+            </div>
+          )}
+          <div
+            ref={contentRef}
+            className="overflow-hidden transition-[height,opacity] duration-500 ease-out"
+            style={{ height: expanded ? contentHeight : 0, opacity: expanded ? 1 : 0 }}
+            aria-hidden={!expanded}
+          >
           <Body className="mt-4">
             As a music producer, Swiden has carved a unique sound that blends
             Afrobeats, Pop, Dancehall, Reggae, EdM , Amapiano , electronics,
@@ -65,6 +108,17 @@ export function About() {
             destined to make a lasting impact on the world through the beauty of
             sound.
           </Body>
+            <div className="mt-6">
+              <Button
+                variant="secondary"
+                aria-label="Close expanded about section"
+                onClick={() => setExpanded(false)}
+                className="shadow-glow"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="glass rounded-2xl p-6 h-100">
           <ul className="grid gap-3 text-sm">
