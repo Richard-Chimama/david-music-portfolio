@@ -1,6 +1,16 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import {
+  PlayIcon,
+  PauseIcon,
+  NextIcon,
+  PrevIcon,
+  VolumeIcon,
+  MuteIcon,
+} from "@/components/icons/MediaControls";
+import Image from "next/image";
 
 type YouTubePlaylistPlayerProps = {
   className?: string;
@@ -382,14 +392,14 @@ export function YouTubePlaylistPlayer({
 
   return (
     <div
-      className={className}
+      className={`${className} relative w-full max-w-full overflow-x-hidden`}
       role={decorative ? undefined : "group"}
       aria-label={
         decorative ? undefined : ariaLabel || "YouTube playlist player"
       }
       aria-hidden={decorative || undefined}
     >
-      <div className="glass rounded-2xl p-6">
+      <div className="glass rounded-2xl p-4 md:p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -410,37 +420,76 @@ export function YouTubePlaylistPlayer({
         </div>
         {/* Player */}
         <div className="mt-4 w-full">
-          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-[var(--border)]">
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[var(--border)]">
             <div id={containerId} className="absolute inset-0" />
           </div>
         </div>
         {/* Controls */}
-        <div className="mt-4 flex items-center gap-4">
+        <div className="mt-4 flex items-center gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
           <Button
             aria-label={isPlaying ? "Pause video" : "Play video"}
             onClick={playPause}
+            className="gap-2 transition-all duration-300"
           >
-            {isPlaying ? "Pause" : "Play"}
+            {/* Mobile: icon only */}
+            <span className="md:hidden inline-flex items-center">
+              {isPlaying ? (
+                <PauseIcon className="w-5 h-5" />
+              ) : (
+                <PlayIcon className="w-5 h-5" />
+              )}
+            </span>
+            {/* Desktop: text label */}
+            <span className="hidden md:inline">
+              {isPlaying ? "Pause" : "Play"}
+            </span>
           </Button>
           <div className="flex items-center gap-2">
             <Button
               variant="secondary"
               aria-label="Previous video"
               onClick={prev}
+              className="gap-2 transition-all duration-300"
             >
-              Prev
+              {/* Mobile: icon only */}
+              <span className="md:hidden inline-flex items-center">
+                <PrevIcon className="w-5 h-5" />
+              </span>
+              {/* Desktop: text label */}
+              <span className="hidden md:inline">Prev</span>
             </Button>
-            <Button variant="secondary" aria-label="Next video" onClick={next}>
-              Next
+            <Button
+              variant="secondary"
+              aria-label="Next video"
+              onClick={next}
+              className="gap-2 transition-all duration-300"
+            >
+              {/* Mobile: icon only */}
+              <span className="md:hidden inline-flex items-center">
+                <NextIcon className="w-5 h-5" />
+              </span>
+              {/* Desktop: text label */}
+              <span className="hidden md:inline">Next</span>
             </Button>
           </div>
           <div className="flex items-center gap-3 ml-2">
             <button
-              className="text-sm hover:text-[var(--neon-cyan)]"
+              className="flex items-center gap-2 text-sm hover:text-[var(--neon-cyan)] transition-all duration-300"
               onClick={toggleMute}
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? "Unmute" : "Mute"}
+              {/* Mobile: icon only */}
+              <span className="md:hidden inline-flex items-center">
+                {isMuted ? (
+                  <VolumeIcon className="w-5 h-5" />
+                ) : (
+                  <MuteIcon className="w-5 h-5" />
+                )}
+              </span>
+              {/* Desktop: text label */}
+              <span className="hidden md:inline">
+                {isMuted ? "Unmute" : "Mute"}
+              </span>
             </button>
             <input
               type="range"
@@ -449,7 +498,7 @@ export function YouTubePlaylistPlayer({
               value={volume}
               onChange={(e) => changeVolume(Number(e.target.value))}
               aria-label="Volume"
-              className="w-28 accent-[var(--neon-cyan)]"
+              className="w-24 sm:w-28 accent-[var(--neon-cyan)] transition-all duration-300"
             />
           </div>
         </div>

@@ -44,7 +44,7 @@ export function Hero() {
       let wordIndex = 0;
       let charIndex = 0;
       let deleting = false;
-      const typingSpeed = 140; // ms per character
+      const typingSpeed = 200; // ms per character
       const pauseBetweenWords = 900; // pause after a word is complete
 
       const $el = jq("#hero-typewriter");
@@ -143,7 +143,7 @@ export function Hero() {
       <Container className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
           <Subheading>I&apos;am Sweden</Subheading>
-          <Heading as="h1" className="text-4xl sm:text-5xl md:text-6xl">
+          <Heading as="h1" className="text-2xl sm:text-5xl md:text-4xl">
             <span 
               ref={typewriterRef}
               id="hero-typewriter" 

@@ -16,6 +16,7 @@ const YouTubeIcon: React.FC<YouTubeIconProps> = ({
       href={href} 
       aria-label="YouTube" 
       className={`group rounded-full p-2 border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]/80 hover:text-[var(--neon-cyan)] hover:border-[var(--neon-cyan)] transition-colors ${className}`}
+      target="_blank"
     >
       <svg 
         aria-hidden="true" 
