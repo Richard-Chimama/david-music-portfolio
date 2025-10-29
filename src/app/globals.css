@@ -77,3 +77,34 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari */
 }
+
+/* Custom slider styling for volume control */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  cursor: pointer;
+  border: 2px solid var(--background);
+  box-shadow: 0 0 8px rgba(0,230,255,0.4);
+}
+
+.slider::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  cursor: pointer;
+  border: 2px solid var(--background);
+  box-shadow: 0 0 8px rgba(0,230,255,0.4);
+}
+
+/* Ensure YouTube iframe created via IFrame API fits its container and never overflows */
+.youtube-iframe-container iframe {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+}

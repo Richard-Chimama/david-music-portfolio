@@ -421,7 +421,8 @@ export function YouTubePlaylistPlayer({
         {/* Player */}
         <div className="mt-4 w-full">
           <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[var(--border)]">
-            <div id={containerId} className="absolute inset-0" />
+            {/* Ensure the iframe created by YT API never overflows its container on mobile */}
+            <div id={containerId} className="absolute inset-0 youtube-iframe-container" />
           </div>
         </div>
         {/* Controls */}
@@ -527,7 +528,7 @@ export function YouTubePlaylistPlayer({
                   key={vid + i}
                   onClick={() => playAt(i)}
                   aria-label={`Play video ${i + 1}`}
-                  className={`relative shrink-0 w-32 aspect-[16/9] rounded-lg overflow-hidden border transition-colors ${
+                  className={`relative shrink-0 w-28 sm:w-32 aspect-[16/9] rounded-lg overflow-hidden border transition-colors ${
                     i === playlistIndex
                       ? "gradient-neon shadow-glow border-transparent"
                       : "border-[var(--border)] hover:border-[var(--neon-cyan)]"
