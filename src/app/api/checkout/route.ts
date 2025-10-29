@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// Initialize Stripe with secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-09-30.clover',
-});
+// NOTE: Avoid initializing Stripe at module scope so build doesn't fail
+// when STRIPE_SECRET_KEY isn't configured. Initialize inside the handler
+// with a clear error message if the key is missing.
 
 export async function POST(request: NextRequest) {
   try {
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecret) {
+      console.error('Missing STRIPE_SECRET_KEY environment variable.');
+      return NextResponse.json(
+        { error: 'Payment configuration missing on server' },
+        { status: 500 }
+      );
+    }
+
+    // Initialize Stripe with a valid API version (or omit to use default)
+    const stripe = new Stripe(stripeSecret);
     const { trackId } = await request.json();
 
     if (!trackId) {

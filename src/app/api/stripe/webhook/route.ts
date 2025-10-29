@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-09-30.clover',
-});
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-
 export async function POST(request: NextRequest) {
   try {
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!stripeSecret || !webhookSecret) {
+      console.error('Missing Stripe configuration. STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not set.');
+      return NextResponse.json(
+        { error: 'Payment configuration missing on server' },
+        { status: 500 }
+      );
+    }
+
+    const stripe = new Stripe(stripeSecret);
     const body = await request.text();
-    const signature = request.headers.get('stripe-signature')!;
+    const signature = request.headers.get('stripe-signature');
+    if (!signature) {
+      return NextResponse.json(
+        { error: 'Missing Stripe signature header' },
+        { status: 400 }
+      );
+    }
 
     let event: Stripe.Event;
 
