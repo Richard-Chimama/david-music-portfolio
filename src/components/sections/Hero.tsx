@@ -142,7 +142,14 @@ export function Hero() {
       </div>
       <Container className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
-          <Subheading>I&apos;am Sweden</Subheading>
+          <Image
+            src="/test1.svg"
+            alt="Sweden"
+            width={500}
+            height={500}
+            className="w-full h-full object-cover rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+          />
+          <Subheading>Iam Sweden</Subheading>
           <Heading as="h1" className="text-2xl sm:text-5xl md:text-4xl">
             <span 
               ref={typewriterRef}
@@ -205,17 +212,6 @@ export function Hero() {
           <InstagramIcon href="https://www.instagram.com/beats_by_swiden_?igsh=MWN2ZXFzaGw4dmliYg%3D%3D&utm_source=qr" />
         </div>
       </Container>
-        <AdvancedMusicalWave 
-            className="h-10 w-full mt-16 sm:mt-24 pointer-events-none" 
-            aria-label="Hero musical wave"
-            audioSource="/audio/sample1.mp3"
-            waveCount={4}
-            amplitude={1.2}
-            speed={0.8}
-            glowIntensity={1.1}
-            particleCount={15}
-            enablePhysics={false}
-          />
     </Section>
   );
 }

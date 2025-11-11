@@ -89,20 +89,36 @@ export function AdvancedMusicalWave({
         audioElementRef.current = new Audio(audioSource);
         audioElementRef.current.crossOrigin = "anonymous";
         audioElementRef.current.loop = true;
+        // Respect browser autoplay policies: muted autoplay is allowed
+        // For decorative visualizations, start muted to avoid NotAllowedError
+        audioElementRef.current.muted = decorative ? true : false;
         
         const mediaSource = audioContextRef.current.createMediaElementSource(audioElementRef.current);
         sourceRef.current = mediaSource;
         mediaSource.connect(analyserRef.current);
         analyserRef.current.connect(audioContextRef.current.destination);
         
-        audioElementRef.current.play().then(() => {
-          setIsAudioActive(true);
-        }).catch(console.warn);
+        // Only attempt autoplay for decorative mode with muted audio
+        // Non-decorative mode waits for explicit user interaction
+        if (decorative && audioElementRef.current.muted) {
+          audioElementRef.current.play()
+            .then(() => {
+              setIsAudioActive(true);
+            })
+            .catch(() => {
+              // Silently fall back to procedural animation - this is normal behavior
+              // The visualization will still work without audio input
+              setIsAudioActive(false);
+            });
+        } else {
+          // For non-decorative or unmuted audio, wait for user interaction
+          setIsAudioActive(false);
+        }
       }
     } catch (error) {
       console.warn("Audio initialization failed:", error);
     }
-  }, [audioSource, enableMicrophone]);
+  }, [audioSource, enableMicrophone, decorative]);
 
   // Update audio data
   const updateAudioData = useCallback(() => {
@@ -409,9 +425,12 @@ export function AdvancedMusicalWave({
             onClick={() => {
               if (audioElementRef.current) {
                 if (audioElementRef.current.paused) {
-                  audioElementRef.current.play();
+                  // Unmute on explicit user interaction
+                  audioElementRef.current.muted = false;
+                  audioElementRef.current.play().then(() => setIsAudioActive(true)).catch(() => setIsAudioActive(false));
                 } else {
                   audioElementRef.current.pause();
+                  setIsAudioActive(false);
                 }
               }
             }}

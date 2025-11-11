@@ -14,7 +14,7 @@ export function Heading({ children, className = "", as: Tag = "h2" }: HeadingPro
 }
 
 export function Subheading({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <p className={`text-sm sm:text-base uppercase tracking-[0.25em] text-[var(--neon-cyan)] ${className}`}>{children}</p>;
+  return <p className={`text-sm sm:text-base  tracking-[0.25em] text-[var(--neon-cyan)] ${className}`}>{children}</p>;
 }
 
 export function Body({ children, className = "" }: { children: ReactNode; className?: string }) {

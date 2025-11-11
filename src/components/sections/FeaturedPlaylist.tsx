@@ -1,57 +1,132 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading, Body } from "@/components/ui/Typography";
-import { Button } from "@/components/ui/Button";
 import { YouTubePlaylistPlayer } from "@/components/ui/YouTubePlaylistPlayer";
 import { PreviewPlayer } from "@/components/ui/PreviewPlayer";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
+import { storage } from "@/lib/firebase";
+// import { collection, getDocs } from "firebase/firestore";
+import { getDownloadURL, ref as storageRef, listAll, getMetadata } from "firebase/storage";
+import type { StorageReference, FullMetadata } from "firebase/storage";
+// Removed duration utilities as we no longer display duration
 
 type Track = { 
   id: number; 
   title: string; 
-  duration: string; 
   src: string;
   format: string;
   sizeInMB: number;
 };
 
-const tracks: Track[] = [
-  { 
-    id: 1, 
-    title: "Test 1", 
-    duration: "3:42", 
-    src: "/audio/sample1.mp3",
-    format: "MP3",
-    sizeInMB: 8.5
-  },
-  { 
-    id: 2, 
-    title: "Test 2", 
-    duration: "4:05", 
-    src: "/audio/sample2.mp3",
-    format: "MP3",
-    sizeInMB: 9.2
-  },
-  { 
-    id: 3, 
-    title: "Test 3", 
-    duration: "2:58", 
-    src: "/audio/sample3.mp3",
-    format: "MP3",
-    sizeInMB: 6.8
-  },
+// Local fallback samples (used when Firebase isn't configured)
+// We'll calculate durations dynamically instead of hardcoding them
+const fallbackTracksBase = [
+  { id: 1, title: "Sample 1", src: "/audio/sample1.mp3", format: "MP3", sizeInMB: 8.5 },
+  { id: 2, title: "Sample 2", src: "/audio/sample2.mp3", format: "MP3", sizeInMB: 9.2 },
+  { id: 3, title: "Sample 3", src: "/audio/sample3.mp3", format: "MP3", sizeInMB: 6.8 },
 ];
 
+// Removed local helpers; now using '@/utils/duration'
+
 export function FeaturedPlaylist() {
-  const [current, setCurrent] = useState<Track | null>(tracks[0]);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [current, setCurrent] = useState<Track | null>(null);
   // Optional YouTube configuration from environment
   const uploadsPlaylistId = process.env.NEXT_PUBLIC_YT_UPLOADS_PLAYLIST_ID;
   const videoIdsCsv = process.env.NEXT_PUBLIC_YT_VIDEO_IDS;
   const videoIds = videoIdsCsv
     ? videoIdsCsv.split(",").map((id) => id.trim()).filter(Boolean)
     : undefined;
+
+  // Initialize with fallback tracks (we no longer show duration)
+  useEffect(() => {
+    const initializeFallbackTracks = async () => {
+      console.log("🎵 Initializing fallback tracks (no duration displayed)...");
+      setTracks(fallbackTracksBase);
+      setCurrent(fallbackTracksBase[0] || null);
+    };
+
+    initializeFallbackTracks();
+  }, []);
+
+  // Recursively list all files in a Storage folder (including nested subfolders)
+  const listAllDeep = async (folderRef: StorageReference): Promise<StorageReference[]> => {
+    const collected: StorageReference[] = [];
+    const traverse = async (ref: StorageReference): Promise<void> => {
+      const res = await listAll(ref);
+      collected.push(...res.items);
+      for (const prefix of res.prefixes) {
+        await traverse(prefix);
+      }
+    };
+    await traverse(folderRef);
+    return collected;
+  };
+
+  // Load tracks from Firebase Storage (and resolve download URLs)
+  useEffect(() => {
+    const load = async () => {
+      if (!storage) {
+        // Firebase Storage not configured – keep fallback (already initialized)
+        console.warn("Firebase Storage not configured. Using fallback tracks.");
+        return;
+      }
+      try {
+        const folderPath = process.env.NEXT_PUBLIC_STORAGE_TRACKS_PATH || "tracks";
+        console.log(`🎵 Listing Firebase Storage folder: ${folderPath}`);
+        const folder = storageRef(storage, folderPath);
+        const items = await listAllDeep(folder);
+        if (items.length === 0) {
+          console.warn(`No audio files found in Storage at path: ${folderPath}. Using fallback tracks.`);
+          return;
+        }
+        const fetched = await Promise.all(
+          items.map(async (itemRef, idx) => {
+            const url = await getDownloadURL(itemRef);
+            const meta: FullMetadata | null = await getMetadata(itemRef).catch(() => null);
+            const bytes = meta?.size ?? 0;
+            const sizeInMB = bytes ? Number((bytes / 1_000_000).toFixed(1)) : 0;
+            const name = itemRef.name;
+            const format = (name.split(".").pop() || "mp3").toUpperCase();
+            const title = name.replace(/\.[^/.]+$/, "");
+
+            // Duration probing removed to avoid misleading displays
+
+            // Validate the final src URL
+            try {
+              new URL(url); // Validate URL format
+              console.log(`✓ Valid audio URL for "${title}": ${url.substring(0, 80)}...`);
+            } catch {
+              console.warn(`❌ Invalid URL format for "${title}": ${url}`);
+            }
+
+            return { id: idx + 1, title, src: url, format, sizeInMB } as Track;
+          })
+        );
+
+        console.log("📊 Fetched tracks summary:", {
+          total: fetched.length,
+          withValidSrc: fetched.filter(t => t.src).length,
+          withoutSrc: fetched.filter(t => !t.src).length
+        });
+
+        if (fetched.length > 0) {
+          setTracks(fetched);
+          setCurrent(fetched[0]);
+        }
+      } catch (e: unknown) {
+        const error = e as { code?: string; message?: string };
+        console.error("Failed to load tracks from Firebase Storage:", {
+          errorCode: error?.code,
+          errorMessage: error?.message,
+          fullError: e
+        });
+      }
+    };
+    load();
+  }, []);
 
   return (
     <Section id="playlist">
@@ -63,10 +138,9 @@ export function FeaturedPlaylist() {
             
             {/* Preview Player */}
             {current && (
-              <PreviewPlayer
+            <PreviewPlayer
                 src={current.src}
                 title={current.title}
-                duration={current.duration}
                 className="mt-6"
               />
             )}
@@ -105,7 +179,15 @@ export function FeaturedPlaylist() {
                         </div>
                       </div>
                     </button>
-                    <span className="text-sm text-[var(--foreground)]/70">{t.duration}</span>
+                    {/* Creative UI: pulsing dot to indicate selectable track */}
+                    <span className="inline-flex items-center">
+                      <span
+                        className={`inline-block w-2.5 h-2.5 rounded-full ${
+                          current?.id === t.id ? 'bg-[var(--neon-cyan)] animate-pulse' : 'bg-[var(--border)]'
+                        }`}
+                        aria-label={current?.id === t.id ? "Current track" : "Track"}
+                      />
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -114,8 +196,8 @@ export function FeaturedPlaylist() {
         </div>
         <div className="h-50"></div>
         {/* YouTube playlist section */}
-        <div className="mt-8 grid md:grid-cols-2 gap-8 items-start">
-          <div className="flex-1">
+        <div className="mt-8">
+          <div className="w-full sm:w-[92%] md:w-[88%] lg:w-[80%] xl:w-[70%] max-w-[1200px] mx-auto">
             <Heading as="h2">Featured Videos</Heading>
             <Body className="mt-2">Watch the latest releases and visuals from Swiden.</Body>
             <YouTubePlaylistPlayer

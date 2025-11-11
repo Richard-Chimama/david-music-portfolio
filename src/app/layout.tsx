@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono, Orbitron, Inter } from "next/font/google";
 import "./globals.css";
+import { AdvancedMusicalWave } from "@/components/ui/AdvancedMusicalWave";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -187,6 +188,28 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${orbitron.variable} ${inter.variable} antialiased`}
       >
+        {/* Full-viewport musical wave overlay (non-interfering) */}
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 h-screen w-screen p-[5px] sm:p-0 pointer-events-none z-[-1]"
+          style={{
+            // Performance hint for smoother animations
+            willChange: "transform, opacity",
+            transform: "translateZ(0)",
+          }}
+        >
+          <AdvancedMusicalWave
+            className="h-full w-full"
+            aria-label="Hero musical wave"
+            audioSource="/audio/sample1.mp3"
+            waveCount={4}
+            amplitude={1.2}
+            speed={0.8}
+            glowIntensity={1.1}
+            particleCount={15}
+            enablePhysics={false}
+          />
+        </div>
         {children}
         {/* jQuery for typewriter animation in Hero (loaded after interactive) */}
         <Script src="https://code.jquery.com/jquery-3.7.1.min.js" strategy="afterInteractive" crossOrigin="anonymous" />

@@ -5,7 +5,6 @@ import { Button } from "./Button";
 interface PreviewPlayerProps {
   src: string;
   title: string;
-  duration: string;
   className?: string;
   onPlay?: () => void;
   onPause?: () => void;
@@ -14,7 +13,6 @@ interface PreviewPlayerProps {
 export function PreviewPlayer({ 
   src, 
   title, 
-  duration, 
   className = "", 
   onPlay, 
   onPause 
@@ -103,6 +101,32 @@ export function PreviewPlayer({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Creative replacement for duration: mood tags derived from title
+  const getMoodTags = (t: string): string[] => {
+    const tags = [
+      "Chill",
+      "Groove",
+      "Ambient",
+      "Uplifting",
+      "Dark",
+      "Dreamy",
+      "Energetic",
+      "Lofi",
+      "Vintage",
+      "Modern",
+    ];
+    const seed = Array.from(t).reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const pick = (offset: number) => tags[(seed + offset) % tags.length];
+    // Ensure unique selection
+    const first = pick(0);
+    let second = pick(3);
+    let third = pick(7);
+    if (second === first) second = pick(4);
+    if (third === first || third === second) third = pick(8);
+    return [first, second, third];
+  };
+  const moodTags = getMoodTags(title);
+
   return (
     <div className={`glass rounded-2xl p-6 ${className}`}>
       <audio
@@ -125,7 +149,17 @@ export function PreviewPlayer({
       {/* Track Info */}
       <div className="mb-4">
         <h3 className="font-medium text-lg">{title}</h3>
-        <p className="text-sm text-[var(--foreground)]/70">Full duration: {duration}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {moodTags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--neon-purple)]/20 text-[var(--neon-purple)] border border-[var(--neon-purple)]/30"
+              aria-label={`Mood tag: ${tag}`}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Controls */}
