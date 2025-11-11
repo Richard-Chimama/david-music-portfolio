@@ -51,6 +51,34 @@ export function FeaturedPlaylist() {
     initializeFallbackTracks();
   }, []);
 
+  // Mobile-aware expand/collapse for track list
+  const [isMobile, setIsMobile] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    // Detect mobile viewport and respond to changes
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    // Support older browsers
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+
+  // Ensure desktop shows all tracks by default
+  useEffect(() => {
+    if (!isMobile) {
+      setExpanded(true);
+    } else {
+      setExpanded(false);
+    }
+  }, [isMobile]);
+
   // Recursively list all files in a Storage folder (including nested subfolders)
   const listAllDeep = async (folderRef: StorageReference): Promise<StorageReference[]> => {
     const collected: StorageReference[] = [];
@@ -162,35 +190,60 @@ export function FeaturedPlaylist() {
           <div className="w-full lg:w-80">
             <div className="glass rounded-2xl p-4">
               <h3 className="font-medium mb-4 text-[var(--neon-cyan)]">Track List</h3>
-              <ul className="divide-y divide-[var(--border)]">
-                {tracks.map((t) => (
-                  <li key={t.id} className="py-3 flex items-center justify-between">
-                    <button
-                      className={`text-left hover:text-[var(--neon-cyan)] transition-colors ${
-                        current?.id === t.id ? 'text-[var(--neon-cyan)]' : ''
-                      }`}
-                      onClick={() => setCurrent(t)}
-                      aria-current={current?.id === t.id ? "true" : "false"}
-                    >
-                      <div>
-                        <div className="font-medium">{t.title}</div>
-                        <div className="text-xs text-[var(--foreground)]/60">
-                          {t.format} • {t.sizeInMB}MB
-                        </div>
-                      </div>
-                    </button>
-                    {/* Creative UI: pulsing dot to indicate selectable track */}
-                    <span className="inline-flex items-center">
-                      <span
-                        className={`inline-block w-2.5 h-2.5 rounded-full ${
-                          current?.id === t.id ? 'bg-[var(--neon-cyan)] animate-pulse' : 'bg-[var(--border)]'
+              {/* Mobile-responsive list: show 3 items by default, expandable */}
+              <div
+                className="transition-all duration-300 ease-in-out"
+                style={{ willChange: 'height, opacity', transform: 'translateZ(0)' }}
+              >
+                <ul
+                  id="playlist-tracklist"
+                  className="divide-y divide-[var(--border)]"
+                  aria-live="polite"
+                >
+                  {(isMobile && !expanded ? tracks.slice(0, 3) : tracks).map((t) => (
+                    <li key={t.id} className="py-3 flex items-center justify-between motion-safe:transition-opacity motion-safe:duration-300">
+                      <button
+                        className={`text-left hover:text-[var(--neon-cyan)] transition-colors ${
+                          current?.id === t.id ? 'text-[var(--neon-cyan)]' : ''
                         }`}
-                        aria-label={current?.id === t.id ? "Current track" : "Track"}
-                      />
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                        onClick={() => setCurrent(t)}
+                        aria-current={current?.id === t.id ? 'true' : 'false'}
+                      >
+                        <div>
+                          <div className="font-medium">{t.title}</div>
+                          <div className="text-xs text-[var(--foreground)]/60">
+                            {t.format} • {t.sizeInMB}MB
+                          </div>
+                        </div>
+                      </button>
+                      {/* Creative UI: pulsing dot to indicate selectable track */}
+                      <span className="inline-flex items-center">
+                        <span
+                          className={`inline-block w-2.5 h-2.5 rounded-full ${
+                            current?.id === t.id ? 'bg-[var(--neon-cyan)] animate-pulse' : 'bg-[var(--border)]'
+                          }`}
+                          aria-label={current?.id === t.id ? 'Current track' : 'Track'}
+                        />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Expand/Collapse control - visible only on mobile when more than 3 tracks */}
+              {isMobile && tracks.length > 3 && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    className="w-full text-sm px-3 py-2 rounded-md bg-[var(--border)]/30 hover:bg-[var(--border)]/50 transition-colors"
+                    aria-expanded={expanded}
+                    aria-controls="playlist-tracklist"
+                    onClick={() => setExpanded((v) => !v)}
+                  >
+                    {expanded ? 'Show fewer tracks' : 'Show all tracks'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

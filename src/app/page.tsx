@@ -2,6 +2,7 @@ import { Hero } from "@/components/sections/Hero";
 import { About } from "@/components/sections/About";
 import { FeaturedPlaylist } from "@/components/sections/FeaturedPlaylist";
 import { Contact } from "@/components/sections/Contact";
+import { Footer } from "@/components/ui/Footer";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <About />
       <FeaturedPlaylist />
       <Contact />
+       <Footer />
     </main>
   );
 }
