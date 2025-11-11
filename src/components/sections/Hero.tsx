@@ -11,126 +11,83 @@ import TikTokIcon from "@/components/icons/TikTokIcon";
 import SpotifyIcon from "@/components/icons/SpotifyIcon";
 import InstagramIcon from "@/components/icons/InstagramIcon";
 import { MusicalWave } from "@/components/ui/MusicalWave";
-import { AdvancedMusicalWave } from "../ui/AdvancedMusicalWave";
 import { useEffect, useRef } from "react";
 import { smoothScrollToId } from "@/utils/scroll";
-
-// Minimal jQuery typings used for the typewriter effect
-type JQueryInstance = {
-  length: number;
-  text: (val: string) => JQueryInstance;
-};
-type JQueryStatic = (selector: string) => JQueryInstance;
 
 export function Hero() {
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const w = window as unknown as { jQuery?: JQueryStatic; $?: JQueryStatic };
-    let startTimeout: number | null = null;
+    const el = typewriterRef.current;
+    if (!el) return;
+
+    const words = [
+      "music producer",
+      "songwriter",
+      "singer",
+      "film star",
+      "sound engineer",
+      "filmmaker",
+    ];
+    let wordIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
     let tickTimeout: number | null = null;
-    let isVisible = false;
-    let isPaused = false;
+    let isVisible = true;
 
-    const startTyping = (jq: JQueryStatic) => {
-      const words = [
-        "music producer",
-        "songwriter",
-        "singer",
-        "film star",
-        "sound engineer",
-        "filmmaker",
-      ];
-      let wordIndex = 0;
-      let charIndex = 0;
-      let deleting = false;
-      const typingSpeed = 200; // ms per character
-      const pauseBetweenWords = 900; // pause after a word is complete
+    const typingSpeed = 160; // slightly faster for snappier feel
+    const pauseBetweenWords = 800;
 
-      const $el = jq("#hero-typewriter");
-      if (!$el.length) return;
+    // Respect user's motion preferences
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      el.textContent = words[0];
+      return;
+    }
 
-      const tick = () => {
-        // Only continue if visible and not paused
-        if (!isVisible || isPaused) {
-          tickTimeout = window.setTimeout(tick, 100); // Check again in 100ms
-          return;
-        }
-
-        const current = words[wordIndex];
-        if (!deleting) {
-          charIndex++;
-          $el.text(current.slice(0, charIndex));
-          if (charIndex >= current.length) {
-            deleting = true;
-            tickTimeout = window.setTimeout(tick, pauseBetweenWords);
-            return;
-          }
-        } else {
-          charIndex--;
-          $el.text(current.slice(0, Math.max(charIndex, 0)));
-          if (charIndex <= 0) {
-            deleting = false;
-            wordIndex = (wordIndex + 1) % words.length;
-          }
-        }
-        tickTimeout = window.setTimeout(tick, typingSpeed);
-      };
-
-      // Start the animation
-      tick();
-
-      // Set up Intersection Observer for visibility detection
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            const wasVisible = isVisible;
-            isVisible = entry.isIntersecting;
-            
-            // Smooth transition: if becoming visible after being hidden, resume
-            if (isVisible && !wasVisible) {
-              isPaused = false;
-            }
-            // If becoming hidden, pause after a short delay for smooth transition
-            else if (!isVisible && wasVisible) {
-              isPaused = true;
-            }
-          });
-        },
-        {
-          threshold: 0.1, // Trigger when 10% of element is visible
-          rootMargin: '50px 0px', // Add some buffer for smoother transitions
-        }
-      );
-
-      // Start observing the typewriter element
-      if (typewriterRef.current) {
-        observer.observe(typewriterRef.current);
-        isVisible = true; // Initially visible
-      }
-
-      // Return cleanup function for observer
-      return () => {
-        observer.disconnect();
-      };
-    };
-
-    const tryStart = () => {
-      const jq = w.jQuery ?? w.$;
-      if (!jq) {
-        startTimeout = window.setTimeout(tryStart, 50);
+    const tick = () => {
+      if (!isVisible) {
+        // Recheck later when not visible
+        tickTimeout = window.setTimeout(tick, 120);
         return;
       }
-      const cleanup = startTyping(jq);
-      return cleanup;
+      const current = words[wordIndex];
+      if (!deleting) {
+        charIndex++;
+        el.textContent = current.slice(0, Math.min(charIndex, current.length));
+        if (charIndex >= current.length) {
+          deleting = true;
+          tickTimeout = window.setTimeout(tick, pauseBetweenWords);
+          return;
+        }
+      } else {
+        charIndex--;
+        el.textContent = current.slice(0, Math.max(charIndex, 0));
+        if (charIndex <= 0) {
+          deleting = false;
+          wordIndex = (wordIndex + 1) % words.length;
+        }
+      }
+      tickTimeout = window.setTimeout(tick, typingSpeed);
     };
 
-    const cleanup = tryStart();
+    // Visibility detection using IntersectionObserver
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          isVisible = entry.isIntersecting;
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px 0px' }
+    );
+    observer.observe(el);
+
+    // Start animation
+    tick();
 
     return () => {
-      if (startTimeout) window.clearTimeout(startTimeout);
       if (tickTimeout) window.clearTimeout(tickTimeout);
-      if (cleanup) cleanup();
+      observer.disconnect();
     };
   }, []);
 
@@ -154,8 +111,8 @@ export function Hero() {
             <span 
               ref={typewriterRef}
               id="hero-typewriter" 
-              className="inline-block min-h-[1em] text-[var(--foreground)] transition-opacity duration-300 ease-in-out" 
-              aria-live="polite" 
+              className="inline-block min-h-[1em] whitespace-nowrap text-[var(--foreground)] transition-opacity duration-300 ease-in-out" 
+              aria-live="polite" aria-atomic="true"
             />
           </Heading>
           <Body>

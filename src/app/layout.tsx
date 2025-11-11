@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono, Orbitron, Inter } from "next/font/google";
 import "./globals.css";
 import { AdvancedMusicalWave } from "@/components/ui/AdvancedMusicalWave";
@@ -64,7 +63,7 @@ export const metadata: Metadata = {
       "Swiden (Iam Swiden) is an award-winning musician, producer, songwriter, singer, sound engineer, filmmaker, and multi-instrumentalist blending Afrobeats, Pop, Dancehall, Reggae, EDM, Amapiano, Electronic, Kompa, Rhumba, and Seben.",
     images: [
       {
-        url: "/sweden.png",
+        url: "/test1.svg",
         width: 1200,
         height: 630,
         alt: "Swiden — Futuristic sound and visuals",
@@ -76,7 +75,11 @@ export const metadata: Metadata = {
     title: "Swiden — Award-Winning Multitalented Musician & Producer",
     description:
       "Swiden (Iam Swiden), award-winning musician, producer, songwriter, singer, sound engineer, filmmaker, and multi-instrumentalist. Born in Sweden with Congolese roots.",
-    images: ["/sweden.png"],
+    images: ["/test1.svg"],
+  },
+  icons: {
+    icon: [{ url: "/test1.svg", type: "image/svg+xml" }],
+    shortcut: ["/test1.svg"],
   },
 };
 
@@ -211,8 +214,6 @@ export default function RootLayout({
           />
         </div>
         {children}
-        {/* jQuery for typewriter animation in Hero (loaded after interactive) */}
-        <Script src="https://code.jquery.com/jquery-3.7.1.min.js" strategy="afterInteractive" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJson) }}

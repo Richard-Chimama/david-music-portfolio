@@ -25,7 +25,7 @@ export const Footer: React.FC<FooterProps> = ({
             &copy; {year} Swiden
           </div>
           <div className="text-xs sm:text-sm text-[var(--foreground)]/60">
-            Built by <span className="text-[var(--neon-cyan)]">Richard</span> · All rights reserved
+            Content by <span className="text-[var(--neon-cyan)]">Iam Sweden</span> · All rights reserved
           </div>
         </div>
       </Container>
