@@ -1,88 +1,68 @@
-import { NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import Stripe from "stripe";
+import { Resend } from "resend";
 
-export async function POST(request: NextRequest) {
-  try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+export const runtime = "nodejs";
 
-    if (!stripeSecret || !webhookSecret) {
-      console.error('Missing Stripe configuration. STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not set.');
-      return NextResponse.json(
-        { error: 'Payment configuration missing on server' },
-        { status: 500 }
-      );
-    }
-
-    const stripe = new Stripe(stripeSecret);
-    const body = await request.text();
-    const signature = request.headers.get('stripe-signature');
-    if (!signature) {
-      return NextResponse.json(
-        { error: 'Missing Stripe signature header' },
-        { status: 400 }
-      );
-    }
-
-    let event: Stripe.Event;
-
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      );
-    }
-
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object as Stripe.Checkout.Session;
-        
-        // Extract track ID from metadata
-        const trackId = session.metadata?.trackId || session.client_reference_id;
-        
-        if (!trackId) {
-          console.error('No track ID found in session metadata');
-          break;
-        }
-
-        // Generate download token (simple UUID-like string for now)
-        const downloadToken = generateDownloadToken();
-        
-        // TODO: Store order in database
-        console.log('Payment completed for track:', trackId);
-        console.log('Download token generated:', downloadToken);
-        
-        // TODO: Send email with download link
-        // For now, just log the download URL
-        const downloadUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/download?token=${downloadToken}&track=${trackId}`;
-        console.log('Download URL:', downloadUrl);
-        
-        break;
-
-      case 'payment_intent.payment_failed':
-        console.log('Payment failed:', event.data.object);
-        break;
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
-    );
-  }
+function getStripeSecretKey(): string {
+  const key = process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY;
+  if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
+  return key;
 }
 
-function generateDownloadToken(): string {
-  return Math.random().toString(36).substring(2) + 
-         Date.now().toString(36) + 
-         Math.random().toString(36).substring(2);
+function getWebhookSecret(): string {
+  const wh = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!wh) throw new Error("Missing STRIPE_WEBHOOK_SECRET");
+  return wh;
+}
+
+export async function POST(req: Request) {
+  const stripe = new Stripe(getStripeSecretKey(), { apiVersion: "2025-09-30.clover" });
+  const sig = req.headers.get("stripe-signature") || "";
+  const payload = await req.text(); // raw string required
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(payload, sig, getWebhookSecret());
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return new Response("Invalid signature", { status: 400 });
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const email = session.customer_details?.email || (session.customer_email as string | null);
+    const trackId = (session.metadata?.trackId as string | undefined) || (session?.line_items?.data?.[0]?.price?.product as string | undefined);
+    const src = (session.metadata?.src as string | undefined) || "";
+
+    if (email && trackId) {
+      try {
+        const origin = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
+        const downloadUrl = src.startsWith("/") && origin ? `${origin}${src}` : src;
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: "Swiden <onboarding@resend.dev>",
+          to: email,
+          subject: "Your track is ready — thank you for your purchase",
+          html: `
+            <div style="font-family: Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:#e6e6e6; background:#0b0d12; padding:24px">
+              <h2 style="color:#22d3ee;">Thank you for your support!</h2>
+              <p>Hi there,</p>
+              <p>We appreciate your purchase. Your track is ready to download:</p>
+              <p>
+                <a href="${downloadUrl}" style="color:#22d3ee; text-decoration:underline;">Download your track</a>
+              </p>
+              <p>If the link doesn’t work, reply to this email and we’ll help you out.</p>
+              <hr style="border:none; border-top:1px solid #223; margin:20px 0;"/>
+              <p style="font-size:12px; color:#a3a3a3;">Order reference: ${session.id}</p>
+            </div>
+          `,
+        });
+      } catch (err) {
+        console.error("Failed to send email:", err);
+      }
+    }
+  }
+
+  return new Response("ok", { status: 200 });
 }

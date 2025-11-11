@@ -5,6 +5,7 @@ import { Button } from "./Button";
 interface PurchaseButtonProps {
   trackId: number;
   title: string;
+  src: string;
   format: string;
   sizeInMB: number;
   price: string;
@@ -15,6 +16,7 @@ interface PurchaseButtonProps {
 export function PurchaseButton({ 
   trackId, 
   title, 
+  src,
   format, 
   sizeInMB, 
   price, 
@@ -37,6 +39,7 @@ export function PurchaseButton({
         body: JSON.stringify({ 
           trackId,
           title,
+          src,
           // Parse price like "€2" -> 200 cents; fallback to €2
           amount: (() => {
             const numeric = parseFloat(String(price).replace(/[^0-9.,-]/g, '').replace(',', '.'));

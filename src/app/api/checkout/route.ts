@@ -13,7 +13,7 @@ function getStripeSecretKey(): string {
 
 export async function POST(req: Request) {
   try {
-    const { trackId, title, amount, currency } = await req.json();
+    const { trackId, title, src, amount, currency } = await req.json();
 
     if (!trackId) {
       return new Response(JSON.stringify({ error: "Missing trackId" }), { status: 400 });
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
             unit_amount: unitAmount, // amount in smallest currency unit
             product_data: {
               name: title ? `Track: ${title}` : `Track #${trackId}`,
-              metadata: { trackId: String(trackId) },
+              metadata: { trackId: String(trackId), src: src ?? "" },
             },
           },
           quantity: 1,
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       ],
       success_url: `${origin}/?success=true&track=${encodeURIComponent(String(trackId))}`,
       cancel_url: `${origin}/?canceled=true`,
-      metadata: { trackId: String(trackId) },
+      metadata: { trackId: String(trackId), src: src ?? "" },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

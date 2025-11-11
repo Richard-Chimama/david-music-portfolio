@@ -178,6 +178,7 @@ export function FeaturedPlaylist() {
               <PurchaseButton
                 trackId={current.id}
                 title={current.title}
+                src={current.src}
                 format={current.format}
                 sizeInMB={current.sizeInMB}
                 price="€2"
