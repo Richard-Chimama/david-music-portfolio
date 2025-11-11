@@ -34,7 +34,17 @@ export function PurchaseButton({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ trackId }),
+        body: JSON.stringify({ 
+          trackId,
+          title,
+          // Parse price like "€2" -> 200 cents; fallback to €2
+          amount: (() => {
+            const numeric = parseFloat(String(price).replace(/[^0-9.,-]/g, '').replace(',', '.'));
+            if (!isNaN(numeric) && numeric > 0) return Math.round(numeric * 100);
+            return 200;
+          })(),
+          currency: 'eur'
+        }),
       });
 
       if (response.ok) {
