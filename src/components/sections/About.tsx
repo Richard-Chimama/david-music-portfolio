@@ -38,11 +38,11 @@ export function About() {
             award winning musician, music producer, songwriter, singer, film
             star, sound engineer, filmmaker, and multi-instrumentalist with high
             skils of playing instruments like guitar , piano and drums (
-            jazzkits ) , violin and more others, he is one of thegreatest music
+            jazzkits ) , violin and more others, he is one of the greatest music
             producer of all the times whose artistry transcends borders and
-            genres. Born on November 15, 2000, in Sweden, to Congolese roots,
-            Swiden embodies a rare fusion of cultural richness and sonic
-            innovation.
+            genres. Swiden is a Swedish music producer with Congolese origin
+            born on the 15th November 2000. Swiden embodies a rare fusion of 
+            cultural richness and sonic innovation.
           </Body>
           {!expanded && (
             <div className="mt-4">

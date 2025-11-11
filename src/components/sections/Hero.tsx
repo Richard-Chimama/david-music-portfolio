@@ -101,12 +101,12 @@ export function Hero() {
         <div className="space-y-6">
           <Image
             src="/test1.svg"
-            alt="Sweden"
+            alt="Swiden"
             width={500}
             height={500}
             className="w-full h-full object-cover rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)]"
           />
-          <Subheading>Iam Sweden</Subheading>
+          <Subheading>Iam Swiden</Subheading>
           <Heading as="h1" className="text-2xl sm:text-5xl md:text-4xl">
             <span 
               ref={typewriterRef}
