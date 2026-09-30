@@ -1,12 +1,15 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "sweden",
+	"name": "music-portfolio",
 	"compatibility_date": "2026-09-30",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	"vars": {
+		"NEXT_PUBLIC_CONTENTFUL_ENVIRONMENT": "master"
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
