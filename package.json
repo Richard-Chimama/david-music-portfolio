@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.7",
     "next": "16.3.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
