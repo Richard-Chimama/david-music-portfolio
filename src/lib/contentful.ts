@@ -44,6 +44,12 @@ export async function getHomepageContent(): Promise<HomepageContent> {
     }
   `;
 
+  console.info("[Contentful config]", {
+  spaceIdPresent: Boolean(process.env.NEXT_PUBLIC_CONTENTFUL_SPACE_ID),
+  environmentPresent: Boolean(process.env.NEXT_PUBLIC_CONTENTFUL_ENVIRONMENT),
+  accessTokenPresent: Boolean(process.env.NEXT_PUBLIC_CONTENTFUL_ACCESS_TOKEN),
+});
+
   const response = await fetch(
     `https://graphql.contentful.com/content/v1/spaces/${process.env.NEXT_PUBLIC_CONTENTFUL_SPACE_ID}/environments/${process.env.NEXT_PUBLIC_CONTENTFUL_ENVIRONMENT ?? "develop"}`,
     {
