@@ -3,6 +3,28 @@ import { Geist, Geist_Mono, Orbitron, Inter } from "next/font/google";
 import "./globals.css";
 import { AdvancedMusicalWave } from "@/components/ui/AdvancedMusicalWave";
 
+function getMetadataBase(): URL {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+    "http://localhost:3000";
+
+  try {
+    const url = new URL(configuredUrl);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("The site URL must use http or https.");
+    }
+
+    return url;
+  } catch {
+    throw new Error(
+      "Invalid site URL. Set NEXT_PUBLIC_SITE_URL or SITE_URL to an absolute http(s) URL.",
+    );
+  }
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -24,6 +46,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getMetadataBase(),
   title: "Swiden — Award-Winning Multitalented Musician & Producer",
   description:
     "Professionally known as Swiden (Iam Swiden), a multi-talented, award-winning musician, producer, songwriter, singer, film star, sound engineer, filmmaker, and multi-instrumentalist. Born November 15, 2000 in Sweden to Congolese roots, Swiden blends Afrobeats, Pop, Dancehall, Reggae, EDM, Amapiano, Electronic, Kompa, Rhumba, Seben and global rhythms. His poetic, spiritually infused music heals, uplifts, and resonates worldwide.",

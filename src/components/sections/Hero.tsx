@@ -10,25 +10,92 @@ import AudiomackIcon from "@/components/icons/AudiomackIcon";
 import TikTokIcon from "@/components/icons/TikTokIcon";
 import SpotifyIcon from "@/components/icons/SpotifyIcon";
 import InstagramIcon from "@/components/icons/InstagramIcon";
+import UnsupportedSocialIcon from "@/components/icons/UnsupportedSocialIcon";
 import { MusicalWave } from "@/components/ui/MusicalWave";
 import { useEffect, useRef } from "react";
 import { smoothScrollToId } from "@/utils/scroll";
+import { HeroContent, SocialLink } from "@/types/types";
+import { useContentfulState } from "@/components/state/ContentfulProvider";
+
+const fallbackSocialLinks = [
+  { name: "youtube", url: "https://www.youtube.com/@swiden369" },
+  { name: "audiomack", url: "https://audiomack.com/swiden" },
+  { name: "tiktok", url: "https://www.tiktok.com/@iamswiden" },
+  { name: "spotify", url: "https://open.spotify.com/artist/7ib41FQHWZxem6NLTqaYH6" },
+  { name: "instagram", url: "https://www.instagram.com/beats_by_swiden_/" },
+];
+
+const fallbackHeroImages = [
+  { url: "/sweden3.png", title: "Abstract sound wave", description: "", width: 500, height: 200 },
+  { url: "/sweden1.png", title: "Neon waveform", description: "", width: 500, height: 200 },
+  { url: "/sweden.png", title: "Synth grid", description: "", width: 500, height: 200 },
+];
+
+function richTextToPlainText(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  if (Array.isArray(value)) {
+    return value.map(richTextToPlainText).join("");
+  }
+
+  const node = value as Record<string, unknown>;
+  if (node.nodeType === "text" && typeof node.value === "string") {
+    return node.value;
+  }
+
+  const content = richTextToPlainText(node.content);
+  return node.nodeType === "paragraph" ? `${content}\n` : content;
+}
+
+
+function SocialLinks({ links }: { links: SocialLink[] }) {
+  return (
+    <>
+      {links.map((link) => {
+        const name = link.name.trim().toLowerCase();
+        const key = link.id || `${name}-${link.url}`;
+
+        if (name.includes("youtube")) return <YouTubeIcon key={key} href={link.url} />;
+        if (name.includes("audiomack")) return <AudiomackIcon key={key} href={link.url} />;
+        if (name.includes("tiktok")) return <TikTokIcon key={key} href={link.url} />;
+        if (name.includes("spotify")) return <SpotifyIcon key={key} href={link.url} />;
+        if (name.includes("instagram")) return <InstagramIcon key={key} href={link.url} />;
+
+        return <UnsupportedSocialIcon key={key} name={link.name} href={link.url} />;
+      })}
+    </>
+  );
+}
 
 export function Hero() {
+  const { homepage } = useContentfulState();
+  const viewModel: HeroContent = homepage?.hero ?? {
+    primaryImageText: "Swiden",
+    words: ["music producer"],
+    textBody: null,
+    socialIconsCollection: null,
+    primaryImage: null,
+    heroImagesCollection: { items: [] },
+  };
+  const socialIcons = Array.isArray(viewModel.socialIconsCollection?.items)
+    ? viewModel.socialIconsCollection.items
+    : [];
+  const heroImages = Array.isArray(viewModel.heroImagesCollection?.items)
+    ? viewModel.heroImagesCollection.items
+    : [];
+  const contentfulHeroImages = heroImages.filter(
+    (image) => typeof image.url === "string" && image.url.trim().length > 0,
+  );
+  const heroSlides = contentfulHeroImages.length
+    ? contentfulHeroImages
+    : fallbackHeroImages;
   const typewriterRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const el = typewriterRef.current;
     if (!el) return;
 
-    const words = [
-      "music producer",
-      "songwriter",
-      "singer",
-      "film star",
-      "sound engineer",
-      "filmmaker",
-    ];
+    const contentfulWords = Array.isArray(viewModel.words) ? viewModel.words : [];
+    const typewriterWords = contentfulWords.length ? contentfulWords : ["musician"];
     let wordIndex = 0;
     let charIndex = 0;
     let deleting = false;
@@ -41,7 +108,7 @@ export function Hero() {
     // Respect user's motion preferences
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) {
-      el.textContent = words[0];
+      el.textContent = typewriterWords[0];
       return;
     }
 
@@ -51,7 +118,7 @@ export function Hero() {
         tickTimeout = window.setTimeout(tick, 120);
         return;
       }
-      const current = words[wordIndex];
+      const current = typewriterWords[wordIndex];
       if (!deleting) {
         charIndex++;
         el.textContent = current.slice(0, Math.min(charIndex, current.length));
@@ -65,7 +132,7 @@ export function Hero() {
         el.textContent = current.slice(0, Math.max(charIndex, 0));
         if (charIndex <= 0) {
           deleting = false;
-          wordIndex = (wordIndex + 1) % words.length;
+          wordIndex = (wordIndex + 1) % typewriterWords.length;
         }
       }
       tickTimeout = window.setTimeout(tick, typingSpeed);
@@ -89,7 +156,12 @@ export function Hero() {
       if (tickTimeout) window.clearTimeout(tickTimeout);
       observer.disconnect();
     };
-  }, []);
+  }, [viewModel.words]);
+
+  const socialLinks = socialIcons.length
+    ? socialIcons
+    : fallbackSocialLinks;
+  const bodyText = richTextToPlainText(viewModel.textBody?.json).trim();
 
   return (
     <Section className="relative sm:pb-0! pb-0! overflow-hidden">
@@ -100,13 +172,13 @@ export function Hero() {
       <Container className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
           <Image
-            src="/test1.svg"
-            alt="Swiden"
+            src={viewModel.primaryImage?.url || "/test1.svg"}
+            alt={viewModel.primaryImage?.description || viewModel.primaryImageText || "Swiden"}
             width={500}
             height={500}
             className="w-full h-full object-cover rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)]"
           />
-          <Subheading>Iam Swiden</Subheading>
+          <Subheading>{viewModel.primaryImageText || "Iam Swiden"}</Subheading>
           <Heading as="h1" className="text-2xl sm:text-5xl md:text-4xl">
             <span 
               ref={typewriterRef}
@@ -115,9 +187,7 @@ export function Hero() {
               aria-live="polite" aria-atomic="true"
             />
           </Heading>
-          <Body>
-            Sonic landscapes and immersive rhythms. Explore releases, playlists, and connect.
-          </Body>
+          <Body>{bodyText || "Sonic landscapes and immersive rhythms. Explore releases, playlists, and connect."}</Body>
           <MusicalWave className="h-20 w-full" decorative aria-label="Hero musical wave" />
           <div className="flex gap-4">
             <a 
@@ -145,28 +215,26 @@ export function Hero() {
           </div>
           {/* Social Icons - Desktop */}
           <div className="hidden md:flex items-center flex-start gap-4 mt-8">
-            <YouTubeIcon href="https://www.youtube.com/@swiden369" />
-            <AudiomackIcon href="https://audiomack.com/swiden" />
-            <TikTokIcon href="https://www.tiktok.com/@iamswiden?_t=ZN-90PSwX76KoA&_r=1" />
-            <SpotifyIcon href="https://open.spotify.com/artist/7ib41FQHWZxem6NLTqaYH6?si=0dCjFJxfQKGhdwR-EdnfJA" />
-            <InstagramIcon href="https://www.instagram.com/beats_by_swiden_?igsh=MWN2ZXFzaGw4dmliYg%3D%3D&utm_source=qr" />
+            <SocialLinks links={socialLinks} />
           </div>
         </div>
         <HeroCarousel
-          slides={[
-            <Image key="slide-sweden" src="/sweden3.png" alt="Abstract sound wave" width={500} height={200} className="w-full h-auto" />,
-            <Image key="slide-next" src="/sweden1.png" alt="Neon waveform" width={500} height={200} className="w-full h-auto " />,
-            <Image key="slide-vercel" src="/sweden.png" alt="Synth grid" width={500} height={200} className="w-full h-auto" />,
-          ]}
+          slides={heroSlides.map((image, index) => (
+            <Image
+              key={`${image.url}-${index}`}
+              src={image.url}
+              alt={image.description || image.title || "Hero artwork"}
+              width={image.width || 500}
+              height={image.height || 200}
+              className="w-full h-auto"
+              unoptimized={image.url.startsWith("http")}
+            />
+          ))}
           ariaLabel="Hero carousel"
         />
         {/* Mobile social icons (below carousel) */}
         <div className="flex md:hidden items-center gap-4 mt-6 justify-center">
-          <YouTubeIcon href="https://www.youtube.com/@swiden369" />
-          <AudiomackIcon href="https://audiomack.com/swiden" />
-          <TikTokIcon href="https://www.tiktok.com/@iamswiden?_t=ZN-90PSwX76KoA&_r=1" />
-          <SpotifyIcon href="https://open.spotify.com/artist/7ib41FQHWZxem6NLTqaYH6?si=0dCjFJxfQKGhdwR-EdnfJA" />
-          <InstagramIcon href="https://www.instagram.com/beats_by_swiden_?igsh=MWN2ZXFzaGw4dmliYg%3D%3D&utm_source=qr" />
+          <SocialLinks links={socialLinks} />
         </div>
       </Container>
     </Section>

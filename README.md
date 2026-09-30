@@ -64,6 +64,33 @@ Ensure your Firebase Storage rules allow read access to the audio files you want
 
 If Firebase is not configured, the playlist will fall back to local sample audio files found under `public/audio/`.
 
+## Contentful read API
+
+Set the public site URL so Open Graph and Twitter image URLs resolve correctly:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://your-domain.example
+```
+
+Use an `https://` URL in deployed environments. `SITE_URL` is also supported for
+server-only deployments; `VERCEL_URL` is used as a fallback on Vercel.
+
+The read-only endpoint is available at `/api/contentful`. Add `?content_type=yourContentType` to filter entries by content type. Keep the Contentful token server-side; do not prefix it with `NEXT_PUBLIC_`.
+
+Use either the environment-specific names below or the generic names. Vercel uses `VERCEL_ENV` to choose production; local development uses the development values.
+
+```bash
+CONTENTFUL_SPACE_ID_DEV=your_dev_space_id
+CONTENTFUL_ACCESS_TOKEN_DEV=your_dev_delivery_token
+CONTENTFUL_ENVIRONMENT_DEV=master
+
+CONTENTFUL_SPACE_ID_PROD=your_prod_space_id
+CONTENTFUL_ACCESS_TOKEN_PROD=your_prod_delivery_token
+CONTENTFUL_ENVIRONMENT_PROD=master
+```
+
+For separate deployment settings, `CONTENTFUL_SPACE_ID` and `CONTENTFUL_ACCESS_TOKEN` are also supported.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
@@ -76,5 +103,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
