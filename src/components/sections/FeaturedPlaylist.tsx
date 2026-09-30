@@ -6,11 +6,6 @@ import { Heading, Body } from "@/components/ui/Typography";
 import { YouTubePlaylistPlayer } from "@/components/ui/YouTubePlaylistPlayer";
 import { PreviewPlayer } from "@/components/ui/PreviewPlayer";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
-import { storage } from "@/lib/firebase";
-// import { collection, getDocs } from "firebase/firestore";
-import { getDownloadURL, ref as storageRef, listAll, getMetadata } from "firebase/storage";
-import type { StorageReference, FullMetadata } from "firebase/storage";
-// Removed duration utilities as we no longer display duration
 
 type Track = { 
   id: number; 
@@ -20,8 +15,7 @@ type Track = {
   sizeInMB: number;
 };
 
-// Local fallback samples (used when Firebase isn't configured)
-// We'll calculate durations dynamically instead of hardcoding them
+// Local sample tracks
 const fallbackTracksBase = [
   { id: 1, title: "Sample 1", src: "/audio/sample1.mp3", format: "MP3", sizeInMB: 8.5 },
   { id: 2, title: "Sample 2", src: "/audio/sample2.mp3", format: "MP3", sizeInMB: 9.2 },
@@ -40,7 +34,6 @@ export function FeaturedPlaylist() {
     ? videoIdsCsv.split(",").map((id) => id.trim()).filter(Boolean)
     : undefined;
 
-  // Initialize with fallback tracks (we no longer show duration)
   useEffect(() => {
     const initializeFallbackTracks = async () => {
       console.log("🎵 Initializing fallback tracks (no duration displayed)...");
@@ -78,83 +71,6 @@ export function FeaturedPlaylist() {
       setExpanded(false);
     }
   }, [isMobile]);
-
-  // Recursively list all files in a Storage folder (including nested subfolders)
-  const listAllDeep = async (folderRef: StorageReference): Promise<StorageReference[]> => {
-    const collected: StorageReference[] = [];
-    const traverse = async (ref: StorageReference): Promise<void> => {
-      const res = await listAll(ref);
-      collected.push(...res.items);
-      for (const prefix of res.prefixes) {
-        await traverse(prefix);
-      }
-    };
-    await traverse(folderRef);
-    return collected;
-  };
-
-  // Load tracks from Firebase Storage (and resolve download URLs)
-  useEffect(() => {
-    const load = async () => {
-      if (!storage) {
-        // Firebase Storage not configured – keep fallback (already initialized)
-        console.warn("Firebase Storage not configured. Using fallback tracks.");
-        return;
-      }
-      try {
-        const folderPath = process.env.NEXT_PUBLIC_STORAGE_TRACKS_PATH || "tracks";
-        console.log(`🎵 Listing Firebase Storage folder: ${folderPath}`);
-        const folder = storageRef(storage, folderPath);
-        const items = await listAllDeep(folder);
-        if (items.length === 0) {
-          console.warn(`No audio files found in Storage at path: ${folderPath}. Using fallback tracks.`);
-          return;
-        }
-        const fetched = await Promise.all(
-          items.map(async (itemRef, idx) => {
-            const url = await getDownloadURL(itemRef);
-            const meta: FullMetadata | null = await getMetadata(itemRef).catch(() => null);
-            const bytes = meta?.size ?? 0;
-            const sizeInMB = bytes ? Number((bytes / 1_000_000).toFixed(1)) : 0;
-            const name = itemRef.name;
-            const format = (name.split(".").pop() || "mp3").toUpperCase();
-            const title = name.replace(/\.[^/.]+$/, "");
-
-            // Duration probing removed to avoid misleading displays
-
-            // Validate the final src URL
-            try {
-              new URL(url); // Validate URL format
-              console.log(`✓ Valid audio URL for "${title}": ${url.substring(0, 80)}...`);
-            } catch {
-              console.warn(`❌ Invalid URL format for "${title}": ${url}`);
-            }
-
-            return { id: idx + 1, title, src: url, format, sizeInMB } as Track;
-          })
-        );
-
-        console.log("📊 Fetched tracks summary:", {
-          total: fetched.length,
-          withValidSrc: fetched.filter(t => t.src).length,
-          withoutSrc: fetched.filter(t => !t.src).length
-        });
-
-        if (fetched.length > 0) {
-          setTracks(fetched);
-          setCurrent(fetched[0]);
-        }
-      } catch (e: unknown) {
-        const error = e as { code?: string; message?: string };
-        console.error("Failed to load tracks from Firebase Storage:", {
-          errorCode: error?.code,
-          errorMessage: error?.message,
-          fullError: e
-        });
-      }
-    };
-    load();
-  }, []);
 
   return (
     <Section id="playlist">
