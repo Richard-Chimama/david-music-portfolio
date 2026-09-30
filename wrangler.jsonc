@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "music-portfolio",
+	"name": "david-music-portfolio",
 	"compatibility_date": "2026-09-30",
 	"compatibility_flags": [
 		"nodejs_compat",
