@@ -31,6 +31,25 @@ const fallbackHeroImages = [
   { url: "/sweden.png", title: "Synth grid", description: "", width: 500, height: 200 },
 ];
 
+function getContentfulImageUrl(url: string, originalWidth?: number | null): string {
+  try {
+    const imageUrl = new URL(url);
+    if (
+      imageUrl.hostname !== "images.ctfassets.net" ||
+      imageUrl.pathname.toLowerCase().endsWith(".svg")
+    ) {
+      return url;
+    }
+
+    imageUrl.searchParams.set("w", String(Math.min(originalWidth || 1200, 1200)));
+    imageUrl.searchParams.set("q", "80");
+    imageUrl.searchParams.set("fm", "webp");
+    return imageUrl.toString();
+  } catch {
+    return url;
+  }
+}
+
 function richTextToPlainText(value: unknown): string {
   if (!value || typeof value !== "object") return "";
   if (Array.isArray(value)) {
@@ -76,6 +95,8 @@ export function Hero() {
     primaryImage: null,
     heroImagesCollection: { items: [] },
   };
+
+  console.log("Hero viewModel:", viewModel);
   const socialIcons = Array.isArray(viewModel.socialIconsCollection?.items)
     ? viewModel.socialIconsCollection.items
     : [];
@@ -172,11 +193,12 @@ export function Hero() {
       <Container className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
           <Image
-            src={viewModel.primaryImage?.url || "/test1.svg"}
+            src={getContentfulImageUrl(viewModel.primaryImage?.url || "/test1.svg", viewModel.primaryImage?.width)}
             alt={viewModel.primaryImage?.description || viewModel.primaryImageText || "Swiden"}
             width={500}
             height={500}
             className="w-full h-full object-cover rounded-lg shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+            unoptimized={Boolean(viewModel.primaryImage?.url)}
           />
           <Subheading>{viewModel.primaryImageText || "Iam Swiden"}</Subheading>
           <Heading as="h1" className="text-2xl sm:text-5xl md:text-4xl">
@@ -222,7 +244,7 @@ export function Hero() {
           slides={heroSlides.map((image, index) => (
             <Image
               key={`${image.url}-${index}`}
-              src={image.url}
+              src={getContentfulImageUrl(image.url, image.width)}
               alt={image.description || image.title || "Hero artwork"}
               width={image.width || 500}
               height={image.height || 200}

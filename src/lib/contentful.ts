@@ -1,48 +1,6 @@
 import { HomepageContent } from "../types/types";
+import { query } from "./queries";
 export async function getHomepageContent(): Promise<HomepageContent> {
-  const query = `
-    query Homepage {
-      homePageCollection(limit: 1) {
-        items {
-          internalTitle
-
-          hero {
-            primaryImageText
-            words
-            socialIconsCollection {
-              items{
-               id
-               name
-               url
-                }
-              }
-
-            textBody {
-              json
-            }
-
-            primaryImage {
-              url
-              title
-              description
-              width
-              height
-            }
-
-            heroImagesCollection {
-              items {
-                url
-                title
-                description
-                width
-                height
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
 
   console.info("[Contentful config]", {
   spaceIdPresent: Boolean(process.env.NEXT_PUBLIC_CONTENTFUL_SPACE_ID),
@@ -71,11 +29,18 @@ export async function getHomepageContent(): Promise<HomepageContent> {
   const result = await response.json();
 
   console.log("Contentful response:", result);
-  const homepage: HomepageContent = result.data?.homePageCollection?.items?.[0];
+  const homepageCollection = result.data?.homePageCollection?.items?.[0];
+  const profileCollection = result.data?.profileCollection?.items?.[0];
 
-  if (!homepage) {
+  const homepageEntry: HomepageContent | undefined = {
+    hero: homepageCollection ?? null,
+    profile: profileCollection ?? null,
+  }
+
+  if (!homepageEntry) {
     throw new Error("No published Home Page entry found in Contentful");
   }
 
-  return homepage;
+
+  return { ...homepageEntry};
 }

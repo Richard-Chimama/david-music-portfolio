@@ -32,12 +32,59 @@ export type HeroContent = {
 };
 
 export type HomepageContent = {
-  internalTitle: string;
   hero: HeroContent;
+  profile: ProfileContent | null;
+};
+
+export type ProfileContent = {
+  internalId: string;
+  aboutHeading: string;
+  description: {
+    json: unknown;
+  } | null;
+  musicProfileSidebar: MusicProfileSection | null;
+};
+
+export type MusicProfileSection = {
+  internalTitle: string;
+  entitiesHeading: string | null;
+  highlightCollection: {
+    items: MusicHighlightContent[];
+  };
+  entitiesCollection: {
+    items: MusicEntityContent[];
+  };
+};
+
+export type MusicHighlightContent = {
+  internalTitle: string;
+  text: string;
+  icon: Icon | null;
+};
+
+export type MusicEntityContent = {
+  internalTitle: string;
+  name: string;
+  icon: Icon | null;
+}
+
+export type Icon = {
+  internalTitle: string;
+  phosphorIcon: PhosphorIcon | null;
+};
+
+type PhosphorIcon = {
+  componentName?: string | null;
+  weight?: string | null;
+  name?: string | null;
+  position?: string | null;
 };
 
 export type HomepageResponse = {
   homePageCollection: {
     items: HomepageContent[];
+  };
+  profileCollection: {
+    items: ProfileContent[];
   };
 };
