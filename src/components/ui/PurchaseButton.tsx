@@ -7,7 +7,7 @@ interface PurchaseButtonProps {
   title: string;
   src: string;
   format: string;
-  sizeInMB: number;
+  sizeInMB: number | null;
   price: string;
   className?: string;
   onPurchaseStart?: () => void;
@@ -85,7 +85,7 @@ export function PurchaseButton({
         </div>
         <div>
           <div className="text-xs text-[var(--foreground)]/70 uppercase tracking-wide">Size</div>
-          <div className="font-medium">{sizeInMB.toFixed(1)} MB</div>
+          <div className="font-medium">{sizeInMB === null ? "Unknown" : `${sizeInMB.toFixed(1)} MB`}</div>
         </div>
       </div>
 

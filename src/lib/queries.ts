@@ -7,7 +7,7 @@
           hero {
             primaryImageText
             words
-            socialIconsCollection {
+            socialIconsCollection(limit: 10) {
               items {
                 id
                 name
@@ -27,7 +27,7 @@
               height
             }
 
-            heroImagesCollection {
+            heroImagesCollection(limit: 10) {
               items {
                 url
                 title
@@ -50,7 +50,7 @@
           musicProfileSidebar {
             internalTitle
             entitiesHeading
-            highlightCollection {
+            highlightCollection(limit: 20) {
               items {
                 internalTitle
                 text
@@ -60,7 +60,7 @@
                 }
               }
             }
-            entitiesCollection {
+            entitiesCollection(limit: 20) {
               items {
                 internalTitle
                 name
@@ -69,6 +69,47 @@
                   phosphorIcon
                 }
               }
+            }
+          }
+        }
+      }
+
+      musicPlaylistCollection(limit: 1) {
+        items {
+          internalTitle
+          description
+          tracksCollection(limit: 100) {
+            items {
+              internalTitle
+              previewAudioCollection(limit: 1) {
+                items {
+                  url
+                  title
+                  description
+                  fileName
+                  contentType
+                  size
+                  width
+                  height
+                }
+              }
+              fullAudioCollection(limit: 1) {
+                items {
+                  url
+                  title
+                  description
+                  fileName
+                  contentType
+                  size
+                  width
+                  height
+                }
+              }
+              tags
+              duration
+              price
+              currency
+              publishedDate
             }
           }
         }

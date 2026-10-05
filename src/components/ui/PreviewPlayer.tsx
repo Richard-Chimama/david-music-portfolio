@@ -10,10 +10,13 @@ interface PreviewPlayerProps {
   onPause?: () => void;
 }
 
+function clampVolume(value: number): number {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+}
+
 export function PreviewPlayer({ 
   src, 
   title, 
-  className = "", 
   onPlay, 
   onPause 
 }: PreviewPlayerProps) {
@@ -22,6 +25,9 @@ export function PreviewPlayer({
   const [volume, setVolume] = useState(0.7);
   const [timeRemaining, setTimeRemaining] = useState(60);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const volumeRef = useRef(0.7);
+  const isPlayingRef = useRef(false);
+  const fadeFrameRef = useRef<number | null>(null);
 
   const PREVIEW_DURATION = 60; // 60 seconds
 
@@ -39,12 +45,14 @@ export function PreviewPlayer({
       // Stop at 60 seconds
       if (current >= PREVIEW_DURATION) {
         audio.pause();
+        isPlayingRef.current = false;
         setIsPlaying(false);
         onPause?.();
       }
     };
 
     const handleEnded = () => {
+      isPlayingRef.current = false;
       setIsPlaying(false);
       setCurrentTime(0);
       setTimeRemaining(60);
@@ -52,7 +60,7 @@ export function PreviewPlayer({
     };
 
     const handleLoadedMetadata = () => {
-      audio.volume = volume;
+      audio.volume = isPlayingRef.current ? 0 : clampVolume(volume);
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -66,12 +74,76 @@ export function PreviewPlayer({
     };
   }, [volume, onPause]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let cancelled = false;
+    const resumePlayback = isPlayingRef.current;
+
+    if (fadeFrameRef.current !== null) {
+      cancelAnimationFrame(fadeFrameRef.current);
+      fadeFrameRef.current = null;
+    }
+
+    setCurrentTime(0);
+    setTimeRemaining(PREVIEW_DURATION);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = resumePlayback ? 0 : clampVolume(volumeRef.current);
+    audio.load();
+
+    if (!resumePlayback) return;
+
+    const startPlayback = () => {
+      if (cancelled) return;
+
+      audio.play().then(() => {
+        const fadeStartedAt = performance.now();
+        const fadeIn = (now: number) => {
+          if (cancelled) return;
+
+          const progress = Math.min(1, Math.max(0, (now - fadeStartedAt) / 300));
+          audio.volume = clampVolume(volumeRef.current * progress);
+
+          if (progress < 1) {
+            fadeFrameRef.current = requestAnimationFrame(fadeIn);
+          } else {
+            fadeFrameRef.current = null;
+          }
+        };
+
+        fadeFrameRef.current = requestAnimationFrame(fadeIn);
+      }).catch(() => {
+        if (cancelled) return;
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+      });
+    };
+
+    if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      startPlayback();
+    } else {
+      audio.addEventListener("canplay", startPlayback, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      audio.removeEventListener("canplay", startPlayback);
+      if (fadeFrameRef.current !== null) {
+        cancelAnimationFrame(fadeFrameRef.current);
+        fadeFrameRef.current = null;
+      }
+    };
+  }, [src]);
+
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
       audio.pause();
+      isPlayingRef.current = false;
       setIsPlaying(false);
       onPause?.();
     } else {
@@ -81,14 +153,20 @@ export function PreviewPlayer({
         setCurrentTime(0);
         setTimeRemaining(60);
       }
-      audio.play();
-      setIsPlaying(true);
-      onPlay?.();
+      audio.play().then(() => {
+        isPlayingRef.current = true;
+        setIsPlaying(true);
+        onPlay?.();
+      }).catch(() => {
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+      });
     }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
+    const newVolume = clampVolume(Number.parseFloat(e.target.value));
+    volumeRef.current = newVolume;
     setVolume(newVolume);
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
@@ -128,7 +206,7 @@ export function PreviewPlayer({
   const moodTags = getMoodTags(title);
 
   return (
-    <div className={`glass rounded-2xl p-6 ${className}`}>
+    <div className={`glass rounded-2xl p-6`}>
       <audio
         ref={audioRef}
         src={src}

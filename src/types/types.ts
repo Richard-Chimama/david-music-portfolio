@@ -2,6 +2,9 @@ type ContentfulAsset = {
   url: string;
   title: string | null;
   description: string | null;
+  fileName?: string | null;
+  contentType?: string | null;
+  size?: number | null;
   width: number | null;
   height: number | null;
 };
@@ -34,6 +37,7 @@ export type HeroContent = {
 export type HomepageContent = {
   hero: HeroContent;
   profile: ProfileContent | null;
+  musicPlaylists: MusicPlaylistContent;
 };
 
 export type ProfileContent = {
@@ -54,6 +58,29 @@ export type MusicProfileSection = {
   entitiesCollection: {
     items: MusicEntityContent[];
   };
+};
+
+export type MusicPlaylistContent = {
+  internalTitle: string;
+  description: string | null;
+  tracksCollection: {
+    items: MusicTrackContent[];
+  };
+};
+
+export type MusicTrackContent = {
+  internalTitle: string;
+  previewAudioCollection: {
+    items: (ContentfulAsset | null)[];
+  } | null;
+  fullAudioCollection: {
+    items: (ContentfulAsset | null)[];
+  } | null;
+  tags: (string | null)[] | null;
+  duration: number | null;
+  price: number | null;
+  currency: string | null;
+  publishedDate: string;
 };
 
 export type MusicHighlightContent = {
@@ -86,5 +113,8 @@ export type HomepageResponse = {
   };
   profileCollection: {
     items: ProfileContent[];
+  };
+  musicPlaylistCollection: {
+    items: MusicPlaylistContent[];
   };
 };

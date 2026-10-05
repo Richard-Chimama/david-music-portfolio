@@ -1,4 +1,4 @@
-import { HomepageContent } from "../types/types";
+import { HomepageContent, MusicPlaylistContent } from "../types/types";
 import { query } from "./queries";
 export async function getHomepageContent(): Promise<HomepageContent> {
 
@@ -21,20 +21,28 @@ export async function getHomepageContent(): Promise<HomepageContent> {
     },
   );
 
+  const result = await response.json();
+
   if (!response.ok) {
-    console.error("Contentful request failed:", response.status,  response);
+    console.error("Contentful request failed:", response.status, result);
     throw new Error(`Contentful request failed: ${response.status}`);
   }
 
-  const result = await response.json();
+  if (result.errors?.length) {
+    const messages = result.errors.map((error: { message: string }) => error.message);
+    console.error("Contentful GraphQL errors:", result.errors);
+    throw new Error(`Contentful GraphQL request failed: ${messages.join("; ")}`);
+  }
 
   console.log("Contentful response:", result);
   const homepageCollection = result.data?.homePageCollection?.items?.[0];
   const profileCollection = result.data?.profileCollection?.items?.[0];
+  const musicPlaylistCollection: MusicPlaylistContent = result.data?.musicPlaylistCollection?.items?.[0];
 
   const homepageEntry: HomepageContent | undefined = {
     hero: homepageCollection ?? null,
     profile: profileCollection ?? null,
+    musicPlaylists: musicPlaylistCollection ?? null,
   }
 
   if (!homepageEntry) {

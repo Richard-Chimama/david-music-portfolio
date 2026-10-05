@@ -6,25 +6,50 @@ import { Heading, Body } from "@/components/ui/Typography";
 import { YouTubePlaylistPlayer } from "@/components/ui/YouTubePlaylistPlayer";
 import { PreviewPlayer } from "@/components/ui/PreviewPlayer";
 import { PurchaseButton } from "@/components/ui/PurchaseButton";
+import { useContentfulState } from "@/components/state/ContentfulProvider";
+import type { MusicPlaylistContent } from "@/types/types";
+
 
 type Track = { 
   id: number; 
   title: string; 
-  src: string;
+  previewSrc: string;
+  downloadSrc: string | null;
   format: string;
-  sizeInMB: number;
+  sizeInMB: number | null;
+  price: string;
 };
 
-// Local sample tracks
-const fallbackTracksBase = [
-  { id: 1, title: "Sample 1", src: "/audio/sample1.mp3", format: "MP3", sizeInMB: 8.5 },
-  { id: 2, title: "Sample 2", src: "/audio/sample2.mp3", format: "MP3", sizeInMB: 9.2 },
-  { id: 3, title: "Sample 3", src: "/audio/sample3.mp3", format: "MP3", sizeInMB: 6.8 },
-];
+function getAssetUrl(url: string): string {
+  return url.startsWith("//") ? `https:${url}` : url;
+}
 
-// Removed local helpers; now using '@/utils/duration'
+function getAssetFormat(contentType?: string | null, fileName?: string | null): string {
+  const extension = fileName?.split(".").pop();
+  if (extension && extension !== fileName) return extension.toUpperCase();
+
+  const subtype = contentType?.split("/")[1];
+  if (subtype === "mpeg") return "MP3";
+  if (subtype === "x-wav") return "WAV";
+  return subtype?.toUpperCase() ?? "Audio";
+}
+
+function getTrackPrice(price: number | null, currency: string | null): string {
+  if (price === null) return "€2";
+
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: currency || "EUR",
+    }).format(price);
+  } catch {
+    return `${price} ${currency || "EUR"}`;
+  }
+}
 
 export function FeaturedPlaylist() {
+    const { homepage } = useContentfulState();
+  const musicPlaylists = homepage?.musicPlaylists as MusicPlaylistContent | undefined;
   const [tracks, setTracks] = useState<Track[]>([]);
   const [current, setCurrent] = useState<Track | null>(null);
   // Optional YouTube configuration from environment
@@ -35,14 +60,30 @@ export function FeaturedPlaylist() {
     : undefined;
 
   useEffect(() => {
-    const initializeFallbackTracks = async () => {
-      console.log("🎵 Initializing fallback tracks (no duration displayed)...");
-      setTracks(fallbackTracksBase);
-      setCurrent(fallbackTracksBase[0] || null);
-    };
+    const contentfulTracks = (musicPlaylists?.tracksCollection?.items ?? []).flatMap(
+      (track, index): Track[] => {
+        const previewAsset = track.previewAudioCollection?.items?.find((asset) => asset?.url) ?? null;
+        const fullAsset = track.fullAudioCollection?.items?.find((asset) => asset?.url) ?? null;
+        const playableAsset = previewAsset ?? fullAsset;
 
-    initializeFallbackTracks();
-  }, []);
+        if (!playableAsset?.url) return [];
+
+        const metadataAsset = fullAsset ?? playableAsset;
+        return [{
+          id: index + 1,
+          title: track.internalTitle || playableAsset.title || "Untitled track",
+          previewSrc: getAssetUrl(playableAsset.url),
+          downloadSrc: fullAsset?.url ? getAssetUrl(fullAsset.url) : null,
+          format: getAssetFormat(metadataAsset.contentType, metadataAsset.fileName),
+          sizeInMB: metadataAsset.size == null ? null : metadataAsset.size / (1024 * 1024),
+          price: getTrackPrice(track.price, track.currency),
+        }];
+      },
+    );
+
+    setTracks(contentfulTracks);
+    setCurrent(contentfulTracks[0] ?? null);
+  }, [musicPlaylists]);
 
   // Mobile-aware expand/collapse for track list
   const [isMobile, setIsMobile] = useState(false);
@@ -75,29 +116,36 @@ export function FeaturedPlaylist() {
   return (
     <Section id="playlist">
       <Container>
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          <div className="flex-1">
-            <Heading>Featured Playlist</Heading>
-            <Body className="mt-2">Dive into curated tracks that define the Iam Sweden vibe.</Body>
-            
+        <div className="w-full">
+          <div className="mb-6">
+            <Heading>{musicPlaylists?.internalTitle || "Featured Playlist"}</Heading>
+            {musicPlaylists?.description && (
+              <Body className="mt-2">{musicPlaylists.description}</Body>
+            )}
+          </div>
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {tracks.length === 0 ? (
+            <Body>No music to show.</Body>
+          ) : (
+            <>
+          <div className="flex-1 w-full lg:w-auto">
             {/* Preview Player */}
             {current && (
             <PreviewPlayer
-                src={current.src}
+                src={current.previewSrc}
                 title={current.title}
-                className="mt-6"
               />
             )}
 
             {/* Purchase Section */}
-            {current && (
+            {current?.downloadSrc && (
               <PurchaseButton
                 trackId={current.id}
                 title={current.title}
-                src={current.src}
+                src={current.downloadSrc}
                 format={current.format}
                 sizeInMB={current.sizeInMB}
-                price="€2"
+                price={current.price}
                 className="mt-6"
               />
             )}
@@ -129,7 +177,7 @@ export function FeaturedPlaylist() {
                         <div>
                           <div className="font-medium">{t.title}</div>
                           <div className="text-xs text-[var(--foreground)]/60">
-                            {t.format} • {t.sizeInMB}MB
+                            {t.format} • {t.sizeInMB === null ? "Size unavailable" : `${t.sizeInMB.toFixed(1)}MB`}
                           </div>
                         </div>
                       </button>
@@ -162,6 +210,10 @@ export function FeaturedPlaylist() {
                 </div>
               )}
             </div>
+          </div>
+
+            </>
+          )}
           </div>
         </div>
         <div className="h-50"></div>
