@@ -78,6 +78,7 @@
         items {
           internalTitle
           description
+          youtubeVideoLinks
           tracksCollection(limit: 100) {
             items {
               internalTitle

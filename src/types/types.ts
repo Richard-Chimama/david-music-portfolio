@@ -63,6 +63,7 @@ export type MusicProfileSection = {
 export type MusicPlaylistContent = {
   internalTitle: string;
   description: string | null;
+  youtubeVideoLinks: string[] | null;
   tracksCollection: {
     items: MusicTrackContent[];
   };

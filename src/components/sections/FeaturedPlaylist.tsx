@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading, Body } from "@/components/ui/Typography";
@@ -19,6 +19,11 @@ type Track = {
   sizeInMB: number | null;
   price: string;
 };
+
+const fallbackVideoLinks = [
+  "https://www.youtube.com/embed/pS_pmJQZD5o?si=OwXp79aNkQnW1vMI",
+  "https://www.youtube.com/embed/Ckir2dnZJG0?si=4K4OrCnXKD3MT3Dv",
+];
 
 function getAssetUrl(url: string): string {
   return url.startsWith("//") ? `https:${url}` : url;
@@ -52,12 +57,15 @@ export function FeaturedPlaylist() {
   const musicPlaylists = homepage?.musicPlaylists as MusicPlaylistContent | undefined;
   const [tracks, setTracks] = useState<Track[]>([]);
   const [current, setCurrent] = useState<Track | null>(null);
-  // Optional YouTube configuration from environment
-  const uploadsPlaylistId = process.env.NEXT_PUBLIC_YT_UPLOADS_PLAYLIST_ID;
-  const videoIdsCsv = process.env.NEXT_PUBLIC_YT_VIDEO_IDS;
-  const videoIds = videoIdsCsv
-    ? videoIdsCsv.split(",").map((id) => id.trim()).filter(Boolean)
-    : undefined;
+  const videoLinks = useMemo(() => {
+    const contentfulVideoLinks = (musicPlaylists?.youtubeVideoLinks ?? [])
+      .filter((link): link is string => typeof link === "string")
+      .map((link) => link.trim())
+      .filter(Boolean);
+    return contentfulVideoLinks.length > 0
+      ? contentfulVideoLinks
+      : fallbackVideoLinks;
+  }, [musicPlaylists?.youtubeVideoLinks]);
 
   useEffect(() => {
     const contentfulTracks = (musicPlaylists?.tracksCollection?.items ?? []).flatMap(
@@ -225,15 +233,7 @@ export function FeaturedPlaylist() {
             <YouTubePlaylistPlayer
               className="mt-6"
               ariaLabel="Swiden YouTube playlist player"
-              // Prefer explicit playlist or video IDs via env; fallback to channel handle search.
-              playlistId={uploadsPlaylistId}
-              videoIds={videoIds}
-              embedUrls={[
-                "https://www.youtube.com/embed/pS_pmJQZD5o?si=OwXp79aNkQnW1vMI",
-                "https://www.youtube.com/embed/Ckir2dnZJG0?si=4K4OrCnXKD3MT3Dv",
-                "https://www.youtube.com/embed/9v4_jksBNSQ?si=ShXAuFIT5XS0poRx",
-              ]}
-              searchQuery="@swiden369"
+              embedUrls={videoLinks}
             />
           </div>
         </div>
