@@ -57,6 +57,7 @@ export function FeaturedPlaylist() {
   const musicPlaylists = homepage?.musicPlaylists as MusicPlaylistContent | undefined;
   const [tracks, setTracks] = useState<Track[]>([]);
   const [current, setCurrent] = useState<Track | null>(null);
+  const [playRequest, setPlayRequest] = useState(0);
   const videoLinks = useMemo(() => {
     const contentfulVideoLinks = (musicPlaylists?.youtubeVideoLinks ?? [])
       .filter((link): link is string => typeof link === "string")
@@ -124,7 +125,7 @@ export function FeaturedPlaylist() {
   return (
     <Section id="playlist">
       <Container>
-        <div className="w-full">
+        <div className="w-full ">
           <div className="mb-6">
             <Heading>{musicPlaylists?.internalTitle || "Featured Playlist"}</Heading>
             {musicPlaylists?.description && (
@@ -142,11 +143,12 @@ export function FeaturedPlaylist() {
             <PreviewPlayer
                 src={current.previewSrc}
                 title={current.title}
+                playRequest={playRequest}
               />
             )}
 
             {/* Purchase Section */}
-            {current?.downloadSrc && (
+           {/*  {current?.downloadSrc && (
               <PurchaseButton
                 trackId={current.id}
                 title={current.title}
@@ -156,7 +158,7 @@ export function FeaturedPlaylist() {
                 price={current.price}
                 className="mt-6"
               />
-            )}
+            )} */}
           </div>
           
           {/* Track List */}
@@ -179,7 +181,10 @@ export function FeaturedPlaylist() {
                         className={`text-left hover:text-[var(--neon-cyan)] transition-colors ${
                           current?.id === t.id ? 'text-[var(--neon-cyan)]' : ''
                         }`}
-                        onClick={() => setCurrent(t)}
+                        onClick={() => {
+                          setCurrent(t);
+                          setPlayRequest((request) => request + 1);
+                        }}
                         aria-current={current?.id === t.id ? 'true' : 'false'}
                       >
                         <div>
@@ -224,7 +229,20 @@ export function FeaturedPlaylist() {
           )}
           </div>
         </div>
-        <div className="h-50"></div>
+         <div className="h-25"></div>
+
+          <div className="glass rounded-2xl px-4 py-16 mt-10 flex flex-col items-center gap-3 text-center">
+          <Body>Support the music with a donation of any amount.</Body>
+          <a
+            href="https://www.paypal.com/donate/?business=YOUR_PAYPAL_EMAIL&currency_code=EUR"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focus-ring inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium transition-colors bg-[var(--neon-blue)] hover:bg-[var(--neon-purple)] text-black shadow-[0_0_12px_rgba(43,134,197,0.6)]"
+          >
+            Donate via PayPal
+          </a>
+        </div>
+        <div className="h-25"></div>
         {/* YouTube playlist section */}
         <div className="mt-8">
           <div className="w-full sm:w-[92%] md:w-[88%] lg:w-[80%] xl:w-[70%] max-w-[1200px] mx-auto">
@@ -237,6 +255,7 @@ export function FeaturedPlaylist() {
             />
           </div>
         </div>
+      
       </Container>
     </Section>
   );

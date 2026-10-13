@@ -4,13 +4,20 @@ import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading, Body } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
-import InstagramIcon from "@/components/icons/InstagramIcon";
-import SpotifyIcon from "@/components/icons/SpotifyIcon";
-import YouTubeIcon from "@/components/icons/YouTubeIcon";
-import TikTokIcon from "@/components/icons/TikTokIcon";
-import AudiomackIcon from "@/components/icons/AudiomackIcon";
+import { SocialLinkIcon, getSocialLinkLabel } from "@/components/icons/SocialLinkIcon";
+import { useContentfulState } from "@/components/state/ContentfulProvider";
+import type { SocialLink } from "@/types/types";
+
+const fallbackSocialLinks: SocialLink[] = [
+  { name: "Instagram", url: "https://www.instagram.com/beats_by_swiden_?igsh=MWN2ZXFzaGw4dmliYg%3D%3D&utm_source=qr" },
+  { name: "Spotify", url: "https://open.spotify.com/artist/7ib41FQHWZxem6NLTqaYH6?si=0dCjFJxfQKGhdwR-EdnfJA" },
+  { name: "YouTube", url: "https://www.youtube.com/@swiden369" },
+  { name: "TikTok", url: "https://www.tiktok.com/@iamswiden?_t=ZN-90PSwX76KoA&_r=1" },
+  { name: "Audiomack", url: "https://audiomack.com/swiden" },
+];
 
 export function Contact() {
+  const { homepage } = useContentfulState();
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [projectType, setProjectType] = useState<string>("");
@@ -63,6 +70,11 @@ export function Contact() {
     }
   };
 
+  const contentfulSocialLinks = homepage?.hero.socialIconsCollection?.items;
+  const socialLinks = contentfulSocialLinks?.length
+    ? contentfulSocialLinks
+    : fallbackSocialLinks;
+
   return (
     <Section id="contact">
       <Container>
@@ -84,27 +96,12 @@ export function Contact() {
             </div>
             <div className="mt-6">
               <div className="flex flex-col items-start gap-3" aria-label="Social media links">
-                {/* Replace hrefs with your actual profiles */}
-                <div className="flex items-center gap-3">
-                  <InstagramIcon href="https://www.instagram.com/beats_by_swiden_?igsh=MWN2ZXFzaGw4dmliYg%3D%3D&utm_source=qr" />
-                  <span className="text-sm text-[var(--foreground)]/80">Instagram</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <SpotifyIcon href="https://open.spotify.com/artist/7ib41FQHWZxem6NLTqaYH6?si=0dCjFJxfQKGhdwR-EdnfJA" />
-                  <span className="text-sm text-[var(--foreground)]/80">Spotify</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <YouTubeIcon href="https://www.youtube.com/@swiden369" />
-                  <span className="text-sm text-[var(--foreground)]/80">YouTube</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <TikTokIcon href="https://www.tiktok.com/@iamswiden?_t=ZN-90PSwX76KoA&_r=1" />
-                  <span className="text-sm text-[var(--foreground)]/80">TikTok</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <AudiomackIcon href="https://audiomack.com/swiden" />
-                  <span className="text-sm text-[var(--foreground)]/80">Audiomack</span>
-                </div>
+                {socialLinks.map((link) => (
+                  <div key={link.id || `${link.name}-${link.url}`} className="flex items-center gap-3">
+                    <SocialLinkIcon link={link} />
+                    <span className="text-sm text-[var(--foreground)]/80">{getSocialLinkLabel(link.name)}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

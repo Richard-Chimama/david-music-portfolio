@@ -5,12 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { Section } from "@/components/ui/Section";
 import { Heading, Subheading, Body } from "@/components/ui/Typography";
 import { HeroCarousel } from "@/components/sections/HeroCarousel";
-import YouTubeIcon from "@/components/icons/YouTubeIcon";
-import AudiomackIcon from "@/components/icons/AudiomackIcon";
-import TikTokIcon from "@/components/icons/TikTokIcon";
-import SpotifyIcon from "@/components/icons/SpotifyIcon";
-import InstagramIcon from "@/components/icons/InstagramIcon";
-import UnsupportedSocialIcon from "@/components/icons/UnsupportedSocialIcon";
+import { SocialLinkIcon } from "@/components/icons/SocialLinkIcon";
 import { MusicalWave } from "@/components/ui/MusicalWave";
 import { useEffect, useRef } from "react";
 import { smoothScrollToId } from "@/utils/scroll";
@@ -70,16 +65,8 @@ function SocialLinks({ links }: { links: SocialLink[] }) {
   return (
     <>
       {links.map((link) => {
-        const name = link.name.trim().toLowerCase();
-        const key = link.id || `${name}-${link.url}`;
-
-        if (name.includes("youtube")) return <YouTubeIcon key={key} href={link.url} />;
-        if (name.includes("audiomack")) return <AudiomackIcon key={key} href={link.url} />;
-        if (name.includes("tiktok")) return <TikTokIcon key={key} href={link.url} />;
-        if (name.includes("spotify")) return <SpotifyIcon key={key} href={link.url} />;
-        if (name.includes("instagram")) return <InstagramIcon key={key} href={link.url} />;
-
-        return <UnsupportedSocialIcon key={key} name={link.name} href={link.url} />;
+        const key = link.id || `${link.name.trim().toLowerCase()}-${link.url}`;
+        return <SocialLinkIcon key={key} link={link} />;
       })}
     </>
   );
@@ -185,7 +172,7 @@ export function Hero() {
   const bodyText = richTextToPlainText(viewModel.textBody?.json).trim();
 
   return (
-    <Section className="relative sm:pb-0! pb-0! overflow-hidden">
+    <Section className="relative sm:pb-10! pb-0! overflow-hidden">
       <div aria-hidden className="absolute inset-0 opacity-30 pointer-events-none">
         <div className="gradient-neon w-[60%] h-[60%] rounded-full blur-[120px] absolute -top-20 -left-20 animate-float" />
         <div className="gradient-neon w-[50%] h-[50%] rounded-full blur-[100px] absolute -bottom-10 right-0 animate-float" style={{ animationDelay: '1.2s' }} />

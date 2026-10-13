@@ -11,7 +11,7 @@ export default async function Home() {
 
   return (
     <ContentfulProvider initialHomepage={homepageContent}>
-      <main className="font-sans">
+      <main className="font-sans max-w-900 mx-auto lg:mx-40">
         <Hero />
         <About />
         <FeaturedPlaylist />

@@ -5,6 +5,7 @@ import { Button } from "./Button";
 interface PreviewPlayerProps {
   src: string;
   title: string;
+  playRequest?: number;
   className?: string;
   onPlay?: () => void;
   onPause?: () => void;
@@ -17,6 +18,7 @@ function clampVolume(value: number): number {
 export function PreviewPlayer({ 
   src, 
   title, 
+  playRequest = 0,
   onPlay, 
   onPause 
 }: PreviewPlayerProps) {
@@ -27,6 +29,7 @@ export function PreviewPlayer({
   const audioRef = useRef<HTMLAudioElement>(null);
   const volumeRef = useRef(0.7);
   const isPlayingRef = useRef(false);
+  const playRequestRef = useRef(0);
   const fadeFrameRef = useRef<number | null>(null);
 
   const PREVIEW_DURATION = 60; // 60 seconds
@@ -79,7 +82,8 @@ export function PreviewPlayer({
     if (!audio) return;
 
     let cancelled = false;
-    const resumePlayback = isPlayingRef.current;
+    const shouldPlay = isPlayingRef.current || playRequest > playRequestRef.current;
+    playRequestRef.current = playRequest;
 
     if (fadeFrameRef.current !== null) {
       cancelAnimationFrame(fadeFrameRef.current);
@@ -90,15 +94,17 @@ export function PreviewPlayer({
     setTimeRemaining(PREVIEW_DURATION);
     audio.pause();
     audio.currentTime = 0;
-    audio.volume = resumePlayback ? 0 : clampVolume(volumeRef.current);
+    audio.volume = shouldPlay ? 0 : clampVolume(volumeRef.current);
     audio.load();
 
-    if (!resumePlayback) return;
+    if (!shouldPlay) return;
 
     const startPlayback = () => {
       if (cancelled) return;
 
       audio.play().then(() => {
+        isPlayingRef.current = true;
+        setIsPlaying(true);
         const fadeStartedAt = performance.now();
         const fadeIn = (now: number) => {
           if (cancelled) return;
@@ -135,7 +141,7 @@ export function PreviewPlayer({
         fadeFrameRef.current = null;
       }
     };
-  }, [src]);
+  }, [src, playRequest]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
