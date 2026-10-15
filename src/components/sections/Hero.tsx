@@ -83,7 +83,6 @@ export function Hero() {
     heroImagesCollection: { items: [] },
   };
 
-  console.log("Hero viewModel:", viewModel);
   const socialIcons = Array.isArray(viewModel.socialIconsCollection?.items)
     ? viewModel.socialIconsCollection.items
     : [];
@@ -102,8 +101,8 @@ export function Hero() {
     const el = typewriterRef.current;
     if (!el) return;
 
-    const contentfulWords = Array.isArray(viewModel.words) ? viewModel.words : [];
-    const typewriterWords = contentfulWords.length ? contentfulWords : ["musician"];
+     // console.log("Hero viewModel:", viewModel);
+    const typewriterWords =  viewModel ? viewModel.words : ["musician"];
     let wordIndex = 0;
     let charIndex = 0;
     let deleting = false;
@@ -164,7 +163,7 @@ export function Hero() {
       if (tickTimeout) window.clearTimeout(tickTimeout);
       observer.disconnect();
     };
-  }, [viewModel.words]);
+  }, [viewModel, viewModel.words]);
 
   const socialLinks = socialIcons.length
     ? socialIcons
